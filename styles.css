@@ -58,7 +58,8 @@ button {
 }
 
 .active {
-  background-color: blanchedalmond;
+  background-color: rgb(252, 162, 28);
+  color: white;
 }
 
 .reset {
