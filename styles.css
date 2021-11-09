@@ -34,3 +34,14 @@ main {
   font-size: 2rem;
   background-color: #a15804;
 }
+
+.green {
+  background-color: green;
+}
+
+button {
+  background-color: beige;
+  margin: 3vmax;
+  padding: 2vmax;
+  border-radius: 10px;
+}

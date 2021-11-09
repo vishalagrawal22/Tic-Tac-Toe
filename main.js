@@ -24,13 +24,15 @@
 
     let game = (function () {
         let currentPlayer = 0;
-        let playerList = [playerFactory("Vishal", "X"), playerFactory("Utkarsh", "O")]
+        let playerList = [];
         let finished = "finished";
         let incomplete = "incomplete";
+        let tie = "tie";
 
         let _getWinner = ((marker) => playerList.filter((player) => (player.getMarker() == marker))[0].getName());
         let getCurrentPlayer = () => playerList[currentPlayer];
         let changeCurrentPlayer = () => currentPlayer ^= 1;
+        let start = (name1, name2) => playerList = [playerFactory(name1, "X"), playerFactory(name2, "O")];
 
         function _checkRows() {
             let board = gameBoard.getCurrentBoard();
@@ -45,7 +47,7 @@
                     }
                 }
                 if (isFinished) {
-                    return { verdict: finished, winner: _getWinner(board[row][0]) };
+                    return { verdict: finished, winner: _getWinner(board[row][0]), row };
                 }
             }
             return { verdict: incomplete };
@@ -64,7 +66,7 @@
                     }
                 }
                 if (isFinished) {
-                    return { verdict: finished, winner: _getWinner(board[0][column]) };
+                    return { verdict: finished, winner: _getWinner(board[0][column]), column };
                 }
             }
             return { verdict: incomplete };
@@ -98,14 +100,49 @@
             }
 
             if (isFinishedLeft) {
-                return { verdict: finished, winner: _getWinner(board[0][0]) };
+                return { verdict: finished, winner: _getWinner(board[0][0]), diagonal: "left" };
             } else if (isFinishedRight) {
-                return { verdict: finished, winner: _getWinner(board[0][side - 1]) };
+                return { verdict: finished, winner: _getWinner(board[0][side - 1]), diagonal: "right" };
             } else {
                 return { verdict: incomplete };
             }
         }
-        return { getCurrentPlayer, changeCurrentPlayer, _checkRows, _checkColumns, _checkDiagonals };
+
+        function _countEmptyCells() {
+            let board = gameBoard.getCurrentBoard();
+            let cnt = 0;
+            for (let row = 0; row < side; row++) {
+                for (let column = 0; column < side; column++) {
+                    if (board[row][column] === " ") {
+                        cnt++;
+                    }
+                }
+            }
+            return cnt;
+        }
+
+        function getVerdict() {
+            let rowVerdict = _checkRows();
+            let columnVerdict = _checkColumns();
+            let diagonalVerdict = _checkDiagonals();
+            if (rowVerdict.verdict !== incomplete) {
+                return rowVerdict;
+            } else if (columnVerdict.verdict !== incomplete) {
+                return columnVerdict;
+            } else if (diagonalVerdict.verdict !== incomplete) {
+                return diagonalVerdict;
+            } else {
+                let cnt = _countEmptyCells();
+                if (cnt === 0) {
+                    return { verdict: tie };
+                }
+                else {
+                    return { verdict: incomplete };
+                }
+            }
+        }
+
+        return { getCurrentPlayer, changeCurrentPlayer, getVerdict, start };
     })();
 
     let displayController = function () {
@@ -128,9 +165,7 @@
                 for (let column = 1; column <= side; column++) {
                     const cell = getCell(row, column);
                     cell.addEventListener('click', (Event) => {
-                        if (Event.target.classList.contains("disabled")) {
-                            alert("Already Taken!");
-                        } else {
+                        if (!Event.target.classList.contains("disabled")) {
                             _cellClicked(row, column);
                         }
                     });
@@ -140,14 +175,14 @@
 
         function _unmark(row, column) {
             const cell = getCell(row, column);
-            cell.textContent = "";
+            cell.innerHTML = "&nbsp;&nbsp;&nbsp;";
             gameBoard.unmark(row, column);
             _enableClick(row, column);
         }
 
         function _mark(row, column) {
             const cell = getCell(row, column);
-            cell.textContent = game.getCurrentPlayer().getMarker();
+            cell.innerHTML = game.getCurrentPlayer().getMarker();
             _disableClick(row, column);
         }
 
@@ -155,13 +190,23 @@
             _mark(row, column);
             gameBoard.mark(row, column, game.getCurrentPlayer().getMarker());
             game.changeCurrentPlayer();
+            let currentVerdict = game.getVerdict();
+            if (currentVerdict.verdict !== "incomplete") {
+                finishGame();
+                if (currentVerdict.verdict === "finished") {
+                    highlightWinCells(currentVerdict);
+                    publishVerdict(`Won by ${currentVerdict.winner}`);
+                } else {
+                    publishVerdict("TIE");
+                }
+            }
         }
 
         function createGrid() {
             let gridInnerHTML = "";
             for (let row = 1; row <= side; row++) {
                 for (let column = 1; column <= side; column++) {
-                    const cell = `<section class="grid-item" style="grid-row: ${row}; grid-column: ${column};" data-row="${row}" data-column="${column}"></section>`;
+                    const cell = `<section class="grid-item" style="grid-row: ${row}; grid-column: ${column};" data-row="${row}" data-column="${column}">&nbsp;&nbsp;&nbsp;</section>`;
                     gridInnerHTML += cell;
                 }
             }
@@ -175,7 +220,54 @@
             verdictPara.textContent = "Verdict will come here!";
             for (let row = 1; row <= side; row++) {
                 for (let column = 1; column <= side; column++) {
+                    let cell = getCell(row, column);
+                    cell.classList.remove("green");
                     _unmark(row, column);
+                }
+            }
+        }
+
+        function deleteGrid() {
+            for (let row = 1; row <= side; row++) {
+                for (let column = 1; column <= side; column++) {
+                    const gridContainer = document.querySelector("#grid-container");
+                    gridContainer.innerHTML = "";
+                }
+            }
+        }
+
+        function highlightWinCells(verdict) {
+            if ("row" in verdict) {
+                for (let column = 1; column <= side; column++) {
+                    let cell = getCell(verdict["row"] + 1, column);
+                    cell.classList.add("green");
+                }
+            } else if ("column" in verdict) {
+                for (let row = 1; row <= side; row++) {
+                    let cell = getCell(row, verdict["column"] + 1);
+                    cell.classList.add("green");
+                }
+            } else if (verdict["diagonal"] === "left") {
+                let column = 1;
+                for (let row = 1; row <= side; row++) {
+                    let cell = getCell(row, column);
+                    cell.classList.add("green");
+                    column++;
+                }
+            } else if (verdict["diagonal"] === "right") {
+                let column = side;
+                for (let row = 1; row <= side; row++) {
+                    let cell = getCell(row, column);
+                    cell.classList.add("green");
+                    column--;
+                }
+            }
+        }
+
+        function finishGame() {
+            for (let row = 1; row <= side; row++) {
+                for (let column = 1; column <= side; column++) {
+                    _disableClick(row, column);
                 }
             }
         }
@@ -184,10 +276,16 @@
             const verdictPara = document.querySelector("#verdict");
             verdictPara.textContent = verdict;
         }
-        return { createGrid, clearGrid, publishVerdict };
+
+        function reset() {
+            clearGrid();
+            game.start("Alice", "Bob");
+        }
+
+        const resetButton = document.querySelector(".reset");
+        resetButton.addEventListener("click", reset);
+        return { createGrid, clearGrid, publishVerdict, deleteGrid };
     }();
 
-    (function test() {
-        displayController.createGrid();
-    })();
+    displayController.createGrid();
 })();
