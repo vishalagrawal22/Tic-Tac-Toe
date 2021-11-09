@@ -4,30 +4,33 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css" /> <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet"> 
     <title>Tic Tac Toe</title>
   </head>
   <body>
     <header>Tic Tac Toe</header>
     <main>
-      <section class="user-input">
+      <section id="user-input">
         <section>
           <label for="name1">First Player Name: </label>
-          <input type="text" name="playerName1" value="player1">
+          <input type="text" name="playerName1" maxlength="50" value="player1" />
         </section>
         <section>
           <label for="name2">Second Player Name: </label>
-          <input type="text" name="playerName2" value="player2">
+          <input type="text" name="playerName2" maxlength="50" value="player2" />
+        </section>
+      </section>
+      <section>
+        <section id="reset-container">
+          <button class="reset">Start</button>
         </section>
       </section>
       <section id="verdict-container">
         <p id="verdict">Verdict will come here!</p>
       </section>
-      <section id="grid-container">
-      </section>
-      <section>
-        <button class="reset">Start</button>
-      </section>
+      <section id="grid-container"></section>
     </main>
     <script src="main.js"></script>
   </body>

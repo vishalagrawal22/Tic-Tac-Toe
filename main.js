@@ -176,6 +176,8 @@
         function _unmark(row, column) {
             const cell = _getCell(row, column);
             cell.innerHTML = "&nbsp;&nbsp;&nbsp;";
+            cell.classList.remove("blue");
+            cell.classList.remove("yellow");
             gameBoard.unmark(row, column);
             _enableClick(row, column);
         }
@@ -183,6 +185,11 @@
         function _mark(row, column) {
             const cell = _getCell(row, column);
             cell.innerHTML = game.getCurrentPlayer().getMarker();
+            if (game.getCurrentPlayer().getMarker() === "O") {
+                cell.classList.add("blue");
+            } else {
+                cell.classList.add("yellow");
+            }
             _disableClick(row, column);
         }
 
@@ -195,7 +202,7 @@
                 disableAllCells();
                 if (currentVerdict.verdict === "finished") {
                     highlightWinCells(currentVerdict);
-                    publishVerdict(`Won by ${currentVerdict.winner}`);
+                    publishVerdict(`Winner is ${currentVerdict.winner}`);
                 } else {
                     publishVerdict("TIE");
                 }

@@ -1,19 +1,23 @@
-* {
+body {
   background-color: burlywood;
+  font-family: 'Quicksand', sans-serif;
 }
 
 header {
   text-align: center;
   font-size: 3rem;
+  font-weight: bold;
 }
 
 main {
   display: flex;
   flex-direction: column;
   align-items: center;
+  font-weight: normal;
 }
 
 #verdict-container > p {
+  font-weight: bold;
   margin: 1vh 1vw;
   font-size: 2rem;
 }
@@ -36,6 +40,10 @@ main {
   background-color: #a15804;
 }
 
+.grid-item:not(.disabled):hover {
+  background-color: #b26915;
+}
+
 .green {
   background-color: green;
 }
@@ -53,9 +61,31 @@ button {
   margin-top: 2vh;
 }
 
-.user-input {
+.blue {
+  color: #00cccc;
+}
+
+.yellow {
+  color: #ffd76b;
+}
+
+#user-input {
   display: flex;
   width: 100%;
   flex-direction: row;
   justify-content: space-around;
+}
+
+#reset-container {
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid black;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
