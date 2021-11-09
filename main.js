@@ -146,24 +146,24 @@
     })();
 
     let displayController = function () {
-        function getCell(row, column) {
+        function _getCell(row, column) {
             return document.querySelector(`[data-row="${row}"][data-column="${column}"]`);
         }
 
         function _enableClick(row, column) {
-            const cell = getCell(row, column);
+            const cell = _getCell(row, column);
             cell.classList.remove("disabled");
         }
 
         function _disableClick(row, column) {
-            const cell = getCell(row, column);
+            const cell = _getCell(row, column);
             cell.classList.add("disabled");
         }
 
         function _setupOnClickListeners() {
             for (let row = 1; row <= side; row++) {
                 for (let column = 1; column <= side; column++) {
-                    const cell = getCell(row, column);
+                    const cell = _getCell(row, column);
                     cell.addEventListener('click', (Event) => {
                         if (!Event.target.classList.contains("disabled")) {
                             _cellClicked(row, column);
@@ -174,14 +174,14 @@
         }
 
         function _unmark(row, column) {
-            const cell = getCell(row, column);
+            const cell = _getCell(row, column);
             cell.innerHTML = "&nbsp;&nbsp;&nbsp;";
             gameBoard.unmark(row, column);
             _enableClick(row, column);
         }
 
         function _mark(row, column) {
-            const cell = getCell(row, column);
+            const cell = _getCell(row, column);
             cell.innerHTML = game.getCurrentPlayer().getMarker();
             _disableClick(row, column);
         }
@@ -192,7 +192,7 @@
             game.changeCurrentPlayer();
             let currentVerdict = game.getVerdict();
             if (currentVerdict.verdict !== "incomplete") {
-                finishGame();
+                disableAllCells();
                 if (currentVerdict.verdict === "finished") {
                     highlightWinCells(currentVerdict);
                     publishVerdict(`Won by ${currentVerdict.winner}`);
@@ -220,18 +220,9 @@
             verdictPara.textContent = "Verdict will come here!";
             for (let row = 1; row <= side; row++) {
                 for (let column = 1; column <= side; column++) {
-                    let cell = getCell(row, column);
+                    let cell = _getCell(row, column);
                     cell.classList.remove("green");
                     _unmark(row, column);
-                }
-            }
-        }
-
-        function deleteGrid() {
-            for (let row = 1; row <= side; row++) {
-                for (let column = 1; column <= side; column++) {
-                    const gridContainer = document.querySelector("#grid-container");
-                    gridContainer.innerHTML = "";
                 }
             }
         }
@@ -239,32 +230,32 @@
         function highlightWinCells(verdict) {
             if ("row" in verdict) {
                 for (let column = 1; column <= side; column++) {
-                    let cell = getCell(verdict["row"] + 1, column);
+                    let cell = _getCell(verdict["row"] + 1, column);
                     cell.classList.add("green");
                 }
             } else if ("column" in verdict) {
                 for (let row = 1; row <= side; row++) {
-                    let cell = getCell(row, verdict["column"] + 1);
+                    let cell = _getCell(row, verdict["column"] + 1);
                     cell.classList.add("green");
                 }
             } else if (verdict["diagonal"] === "left") {
                 let column = 1;
                 for (let row = 1; row <= side; row++) {
-                    let cell = getCell(row, column);
+                    let cell = _getCell(row, column);
                     cell.classList.add("green");
                     column++;
                 }
             } else if (verdict["diagonal"] === "right") {
                 let column = side;
                 for (let row = 1; row <= side; row++) {
-                    let cell = getCell(row, column);
+                    let cell = _getCell(row, column);
                     cell.classList.add("green");
                     column--;
                 }
             }
         }
 
-        function finishGame() {
+        function disableAllCells() {
             for (let row = 1; row <= side; row++) {
                 for (let column = 1; column <= side; column++) {
                     _disableClick(row, column);
@@ -277,15 +268,20 @@
             verdictPara.textContent = verdict;
         }
 
-        function reset() {
-            clearGrid();
-            game.start("Alice", "Bob");
+        function reset(Event) {
+            if (Event.target.textContent === "Start") {
+                Event.target.textContent = "Reset";
+                createGrid();
+            } else {
+                clearGrid();
+            }
+            let playerName1 = document.querySelector("input[name='playerName1']").value;
+            let playerName2 = document.querySelector("input[name='playerName2']").value;
+            game.start(playerName1, playerName2);
         }
 
         const resetButton = document.querySelector(".reset");
         resetButton.addEventListener("click", reset);
-        return { createGrid, clearGrid, publishVerdict, deleteGrid };
+        return { createGrid, clearGrid, publishVerdict };
     }();
-
-    displayController.createGrid();
 })();

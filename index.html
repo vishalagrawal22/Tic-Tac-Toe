@@ -10,12 +10,24 @@
   <body>
     <header>Tic Tac Toe</header>
     <main>
+      <section class="user-input">
+        <section>
+          <label for="name1">First Player Name: </label>
+          <input type="text" name="playerName1" value="player1">
+        </section>
+        <section>
+          <label for="name2">Second Player Name: </label>
+          <input type="text" name="playerName2" value="player2">
+        </section>
+      </section>
       <section id="verdict-container">
         <p id="verdict">Verdict will come here!</p>
       </section>
       <section id="grid-container">
       </section>
-      <button class="reset">Reset</button>
+      <section>
+        <button class="reset">Start</button>
+      </section>
     </main>
     <script src="main.js"></script>
   </body>

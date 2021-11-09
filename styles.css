@@ -13,7 +13,8 @@ main {
   align-items: center;
 }
 
-#verdict-container {
+#verdict-container > p {
+  margin: 1vh 1vw;
   font-size: 2rem;
 }
 
@@ -41,7 +42,20 @@ main {
 
 button {
   background-color: beige;
-  margin: 3vmax;
-  padding: 2vmax;
+  width: 15vw;
+  height: auto;
+  margin: 1.5vh 1vw;
+  padding: 1.5vh 1.5vw;
   border-radius: 10px;
+}
+
+.reset {
+  margin-top: 2vh;
+}
+
+.user-input {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-around;
 }
