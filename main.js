@@ -487,7 +487,24 @@
                 const activeButton = document.querySelector(".active");
                 activeButton.classList.remove("active");
                 Event.target.classList.add("active");
-                game.setMode(Event.target.getAttribute("data-mode"));
+                let buttonType = Event.target.getAttribute("data-mode");
+                if (buttonType === "easy") {
+                    const secondLabel = document.querySelector("label[for='name2']");
+                    secondLabel.textContent = "Computer Name: ";
+                    const secondNameInput = document.querySelector("#name2");
+                    secondNameInput.value = "Random Bot";
+                } else if (buttonType === "hard") {
+                    const secondLabel = document.querySelector("label[for='name2']");
+                    secondLabel.textContent = "Computer Name: ";
+                    const secondNameInput = document.querySelector("#name2");
+                    secondNameInput.value = "Smart Bot";
+                } else {
+                    const secondLabel = document.querySelector("label[for='name2']");
+                    secondLabel.textContent = "Second Player: ";
+                    const secondNameInput = document.querySelector("#name2");
+                    secondNameInput.value = "Bob";
+                }
+                game.setMode(buttonType);
             });
         }
         return { createGrid, clearGrid, publishVerdict, simulateClick };
