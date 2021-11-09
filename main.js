@@ -1,76 +1,61 @@
 'use strict';
 (function () {
     let side = 3;
-    let gameBoard = (function () {
-        let board = new Array(side);
-        for (let row = 0; row < side; row++) {
-            board[row] = new Array(side);
-            for (let column = 0; column < side; column++) {
-                board[row][column] = " ";
+
+    let base3 = (function () {
+        let base = 3;
+        function shift(index) {
+            let ans = 1;
+            for (let i = 0; i < index; i++) {
+                ans *= base;
             }
+            return ans;
         }
 
-        let mark = (row, column, marker) => board[row - 1][column - 1] = marker;
-        let unmark = (row, column) => board[row - 1][column - 1] = " ";
-        let getCurrentBoard = () => board;
-        return { mark, unmark, getCurrentBoard };
-    })();
-
-    function playerFactory(name, marker) {
-        let getName = () => name;
-        let getMarker = () => marker;
-        return { getName, getMarker };
-    }
-
-    let computer = (function () {
-        function precompute() {
-            console.log("Doing some precomputing");
+        function getBit(num, index) {
+            let d = shift(index);
+            num = Math.floor(num / d);
+            return num % base;
         }
 
-        function _computeMove() {
-            if (game.getCurrentMode() == "easy") {
-                let board = gameBoard.getCurrentBoard();
-                let remainCells = [];
-                for (let row = 0; row < side; row++) {
-                    for (let column = 0; column < side; column++) {
-                        if (board[row][column] === " ") { 
-                            remainCells.push({row, column});
-                        }
-                    }
+        function setBit(num, index, val) {
+            let cur = getBit(num, index) * shift(index);
+            num -= cur;
+            num += val * shift(index);
+            return num;
+        }
+
+        function transform(num, len) {
+            let ans = 0;
+            for (let i = 0; i < len; i++) {
+                let cur = getBit(num, i);
+                if (cur == 0) {
+                    ans += shift(i);
+                } else if (cur == 2) {
+                    ans += 2 * shift(i);
                 }
-                let randIndex = Math.floor(Math.random() * remainCells.length);
-                return remainCells[randIndex];
-            } else if (game.getCurrentMode() == "hard") {
-                return {row: 1, column: 1};
             }
+            return ans;
         }
 
-        function move() {
-            let computerMove = _computeMove();
-            displayController.simulateClick(computerMove.row + 1, computerMove.column + 1);
+        function print(num, len) {
+            let ans = "";
+            for (let i = 0; i < len; i++) {
+                ans = getBit(num, i) + ans;
+            }
+            console.log(ans);
         }
 
-        return { precompute, move };
+        return { getBit, setBit, transform, shift, print };
     })();
 
-    let game = (function () {
-        let currentPlayer = 0;
-        let mode = "pvp";
-        let playerList = [];
+
+    let checker = (function () {
         let finished = "finished";
         let incomplete = "incomplete";
         let tie = "tie";
 
-        let getCurrentMode = () => mode;
-        let setMode = (newMode) => mode = newMode;
-        let _getWinner = ((marker) => playerList.filter((player) => (player.getMarker() == marker))[0].getName());
-        let getCurrentPlayer = () => playerList[currentPlayer];
-        let resetCurrentPlayer = () => currentPlayer = 0;
-        let changeCurrentPlayer = () => currentPlayer ^= 1;
-        let start = (name1, name2) => playerList = [playerFactory(name1, "X"), playerFactory(name2, "O")];
-
-        function _checkRows() {
-            let board = gameBoard.getCurrentBoard();
+        function _checkRows(board) {
             for (let row = 0; row < side; row++) {
                 if (board[row][0] === " ") {
                     continue;
@@ -82,14 +67,13 @@
                     }
                 }
                 if (isFinished) {
-                    return { verdict: finished, winner: _getWinner(board[row][0]), row };
+                    return { verdict: finished, winner: board[row][0], row };
                 }
             }
             return { verdict: incomplete };
         }
 
-        function _checkColumns() {
-            let board = gameBoard.getCurrentBoard();
+        function _checkColumns(board) {
             for (let column = 0; column < side; column++) {
                 if (board[0][column] === " ") {
                     continue;
@@ -101,14 +85,13 @@
                     }
                 }
                 if (isFinished) {
-                    return { verdict: finished, winner: _getWinner(board[0][column]), column };
+                    return { verdict: finished, winner: board[0][column], column };
                 }
             }
             return { verdict: incomplete };
         }
 
-        function _checkDiagonals() {
-            let board = gameBoard.getCurrentBoard();
+        function _checkDiagonals(board) {
             let isFinishedLeft = 1;
             let isFinishedRight = 1;
             let columnLeft = 0;
@@ -135,16 +118,15 @@
             }
 
             if (isFinishedLeft) {
-                return { verdict: finished, winner: _getWinner(board[0][0]), diagonal: "left" };
+                return { verdict: finished, winner: board[0][0], diagonal: "left" };
             } else if (isFinishedRight) {
-                return { verdict: finished, winner: _getWinner(board[0][side - 1]), diagonal: "right" };
+                return { verdict: finished, winner: board[0][side - 1], diagonal: "right" };
             } else {
                 return { verdict: incomplete };
             }
         }
 
-        function _countEmptyCells() {
-            let board = gameBoard.getCurrentBoard();
+        function _countEmptyCells(board) {
             let cnt = 0;
             for (let row = 0; row < side; row++) {
                 for (let column = 0; column < side; column++) {
@@ -156,10 +138,10 @@
             return cnt;
         }
 
-        function getVerdict() {
-            let rowVerdict = _checkRows();
-            let columnVerdict = _checkColumns();
-            let diagonalVerdict = _checkDiagonals();
+        function checkBoard(board) {
+            let rowVerdict = _checkRows(board);
+            let columnVerdict = _checkColumns(board);
+            let diagonalVerdict = _checkDiagonals(board);
             if (rowVerdict.verdict !== incomplete) {
                 return rowVerdict;
             } else if (columnVerdict.verdict !== incomplete) {
@@ -167,7 +149,7 @@
             } else if (diagonalVerdict.verdict !== incomplete) {
                 return diagonalVerdict;
             } else {
-                let cnt = _countEmptyCells();
+                let cnt = _countEmptyCells(board);
                 if (cnt === 0) {
                     return { verdict: tie };
                 }
@@ -175,6 +157,166 @@
                     return { verdict: incomplete };
                 }
             }
+        }
+
+        return { checkBoard };
+    })();
+
+    let gameBoard = (function () {
+        let board = new Array(side);
+        for (let row = 0; row < side; row++) {
+            board[row] = new Array(side);
+            for (let column = 0; column < side; column++) {
+                board[row][column] = " ";
+            }
+        }
+
+        let mark = (row, column, marker) => board[row - 1][column - 1] = marker;
+        let unmark = (row, column) => board[row - 1][column - 1] = " ";
+        let getCurrentBoard = () => board;
+        return { mark, unmark, getCurrentBoard };
+    })();
+
+    function playerFactory(name, marker) {
+        let getName = () => name;
+        let getMarker = () => marker;
+        return { getName, getMarker };
+    }
+
+    let computer = (function () {
+        let bestScore = new Array(base3.shift(side * side));
+        bestScore.fill(1e9);
+        let bestMove = new Array(base3.shift(side * side));
+
+        function recur(num) {
+            if (bestScore[num] != 1e9) {
+                return bestScore[num];
+            }
+
+            let currentVerdict = checker.checkBoard(makeBoard(num));
+            if (currentVerdict.verdict === "finished") {
+                if (currentVerdict.winner === "1") {
+                    bestScore[num] = -1;
+                    return bestScore[num];
+                } else if (currentVerdict.winner === "0") {
+                    bestScore[num] = 1;
+                    return bestScore[num];
+                }
+            } else if (currentVerdict.verdict === "tie") {
+                bestScore[num] = 0;
+                return bestScore[num];
+            } else {
+                bestScore[num] = -2;
+                for (let i = 0; i < side * side; i++) {
+                    if (base3.getBit(num, i) === 2) {
+                        let nxt = base3.setBit(num, i, 0);
+                        let result = -1 * recur(base3.transform(nxt, side * side));
+                        if (result > bestScore[num]) {
+                            bestScore[num] = result;
+                            let row = Math.floor(i / side);
+                            let column = i % side;
+                            bestMove[num] = { row, column };
+                        }
+                    }
+                }
+                return bestScore[num];
+            }
+        }
+
+        function makeBoard(num) {
+            let board = new Array(side);
+            for (let row = 0; row < side; row++) {
+                board[row] = new Array(side);
+                for (let column = 0; column < side; column++) {
+                    let index = row * side + column;
+                    board[row][column] = base3.getBit(num, index);
+                }
+                board[row] = board[row].map((cur) => {
+                    if (cur != 2) {
+                        return cur.toString();
+                    } else {
+                        return " ";
+                    }
+                });
+            }
+            return board;
+        }
+
+        function makeNum(board, marker) {
+            let result = new Array(side);
+            let num = 0;
+            for (let row = 0; row < side; row++) {
+                result[row] = new Array(side);
+                for (let column = 0; column < side; column++) {
+                    let index = row * side + column;
+                    if (board[row][column] === " ") {
+                        result[row][column] = 2;
+                        num += 2 * base3.shift(index);
+                    } else if (board[row][column] !== marker) {
+                        result[row][column] = 1;
+                        num += base3.shift(index);
+                    } else {
+                        result[row][column] = 0;
+                    }
+                }
+            }
+            return num;
+        }
+
+        function precompute() {
+            recur(base3.shift(side * side) - 1);
+        }
+
+        function _computeMove() {
+            if (game.getCurrentMode() == "easy") {
+                let board = gameBoard.getCurrentBoard();
+                let remainCells = [];
+                for (let row = 0; row < side; row++) {
+                    for (let column = 0; column < side; column++) {
+                        if (board[row][column] === " ") {
+                            remainCells.push({ row, column });
+                        }
+                    }
+                }
+                let randIndex = Math.floor(Math.random() * remainCells.length);
+                return remainCells[randIndex];
+            } else if (game.getCurrentMode() == "hard") {
+                let board = gameBoard.getCurrentBoard();
+                let computerMarker = game.getCurrentPlayer().getMarker();
+                let num = makeNum(board, computerMarker);
+                let move = bestMove[num];
+                return { row: move.row, column: move.column };
+            }
+        }
+
+        function move() {
+            let computerMove = _computeMove();
+            displayController.simulateClick(computerMove.row + 1, computerMove.column + 1);
+        }
+
+        return { precompute, move };
+    })();
+
+    let game = (function () {
+        let currentPlayer = 0;
+        let mode = "pvp";
+        let playerList = [];
+
+        let getCurrentMode = () => mode;
+        let setMode = (newMode) => mode = newMode;
+        let _getWinner = ((marker) => playerList.filter((player) => (player.getMarker() == marker))[0].getName());
+        let getCurrentPlayer = () => playerList[currentPlayer];
+        let resetCurrentPlayer = () => currentPlayer = 0;
+        let changeCurrentPlayer = () => currentPlayer ^= 1;
+        let start = (name1, name2) => playerList = [playerFactory(name1, "X"), playerFactory(name2, "O")];
+
+        function getVerdict() {
+            let board = gameBoard.getCurrentBoard();
+            let verdict = checker.checkBoard(board);
+            if (verdict.verdict === "finished") {
+                verdict["winner"] = _getWinner(verdict["winner"]);
+            }
+            return verdict;
         }
 
         return { getCurrentPlayer, changeCurrentPlayer, getVerdict, start, setMode, getCurrentMode, resetCurrentPlayer };
