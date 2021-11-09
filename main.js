@@ -22,15 +22,50 @@
         return { getName, getMarker };
     }
 
+    let computer = (function () {
+        function precompute() {
+            console.log("Doing some precomputing");
+        }
+
+        function _computeMove() {
+            if (game.getCurrentMode() == "easy") {
+                let board = gameBoard.getCurrentBoard();
+                let remainCells = [];
+                for (let row = 0; row < side; row++) {
+                    for (let column = 0; column < side; column++) {
+                        if (board[row][column] === " ") { 
+                            remainCells.push({row, column});
+                        }
+                    }
+                }
+                let randIndex = Math.floor(Math.random() * remainCells.length);
+                return remainCells[randIndex];
+            } else if (game.getCurrentMode() == "hard") {
+                return {row: 1, column: 1};
+            }
+        }
+
+        function move() {
+            let computerMove = _computeMove();
+            displayController.simulateClick(computerMove.row + 1, computerMove.column + 1);
+        }
+
+        return { precompute, move };
+    })();
+
     let game = (function () {
         let currentPlayer = 0;
+        let mode = "pvp";
         let playerList = [];
         let finished = "finished";
         let incomplete = "incomplete";
         let tie = "tie";
 
+        let getCurrentMode = () => mode;
+        let setMode = (newMode) => mode = newMode;
         let _getWinner = ((marker) => playerList.filter((player) => (player.getMarker() == marker))[0].getName());
         let getCurrentPlayer = () => playerList[currentPlayer];
+        let resetCurrentPlayer = () => currentPlayer = 0;
         let changeCurrentPlayer = () => currentPlayer ^= 1;
         let start = (name1, name2) => playerList = [playerFactory(name1, "X"), playerFactory(name2, "O")];
 
@@ -142,7 +177,7 @@
             }
         }
 
-        return { getCurrentPlayer, changeCurrentPlayer, getVerdict, start };
+        return { getCurrentPlayer, changeCurrentPlayer, getVerdict, start, setMode, getCurrentMode, resetCurrentPlayer };
     })();
 
     let displayController = function () {
@@ -178,6 +213,7 @@
             cell.innerHTML = "&nbsp;&nbsp;&nbsp;";
             cell.classList.remove("blue");
             cell.classList.remove("yellow");
+            cell.classList.remove("computer-move");
             gameBoard.unmark(row, column);
             _enableClick(row, column);
         }
@@ -207,6 +243,12 @@
                     publishVerdict("TIE");
                 }
             }
+            else if (game.getCurrentMode() !== "pvp") {
+                const cell = _getCell(row, column);
+                if (!cell.classList.contains("computer-move")) {
+                    computer.move();
+                }
+            }
         }
 
         function createGrid() {
@@ -225,6 +267,7 @@
         function clearGrid() {
             const verdictPara = document.querySelector("#verdict");
             verdictPara.textContent = "Verdict will come here!";
+            game.resetCurrentPlayer();
             for (let row = 1; row <= side; row++) {
                 for (let column = 1; column <= side; column++) {
                     let cell = _getCell(row, column);
@@ -232,6 +275,12 @@
                     _unmark(row, column);
                 }
             }
+        }
+
+        function simulateClick(row, column) {
+            const cell = _getCell(row, column);
+            cell.classList.add("computer-move");
+            cell.click();
         }
 
         function highlightWinCells(verdict) {
@@ -289,6 +338,18 @@
 
         const resetButton = document.querySelector(".reset");
         resetButton.addEventListener("click", reset);
-        return { createGrid, clearGrid, publishVerdict };
+        const modesButtons = document.querySelector("#modes").children;
+        for (let child = 0; child < modesButtons.length; child++) {
+            const modeButton = modesButtons[child];
+            modeButton.addEventListener('click', (Event) => {
+                const activeButton = document.querySelector(".active");
+                activeButton.classList.remove("active");
+                Event.target.classList.add("active");
+                game.setMode(Event.target.getAttribute("data-mode"));
+            });
+        }
+        return { createGrid, clearGrid, publishVerdict, simulateClick };
     }();
+
+    computer.precompute();
 })();

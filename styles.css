@@ -49,12 +49,16 @@ main {
 }
 
 button {
-  background-color: beige;
+  background-color: wheat;
   width: 15vw;
   height: auto;
   margin: 1.5vh 1vw;
   padding: 1.5vh 1.5vw;
   border-radius: 10px;
+}
+
+.active {
+  background-color: blanchedalmond;
 }
 
 .reset {
