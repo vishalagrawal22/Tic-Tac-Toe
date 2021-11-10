@@ -377,9 +377,10 @@
             game.changeCurrentPlayer();
             let currentVerdict = game.getVerdict();
             if (currentVerdict.verdict !== "incomplete") {
-                disableAllCells();
+                _disableAllCells();
+                _manageInputField(false);
                 if (currentVerdict.verdict === "finished") {
-                    highlightWinCells(currentVerdict);
+                    _highlightWinCells(currentVerdict);
                     publishVerdict(`Winner is ${currentVerdict.winner}`);
                 } else {
                     publishVerdict("TIE");
@@ -425,7 +426,7 @@
             cell.click();
         }
 
-        function highlightWinCells(verdict) {
+        function _highlightWinCells(verdict) {
             if ("row" in verdict) {
                 for (let column = 1; column <= side; column++) {
                     let cell = _getCell(verdict["row"] + 1, column);
@@ -453,7 +454,7 @@
             }
         }
 
-        function disableAllCells() {
+        function _disableAllCells() {
             for (let row = 1; row <= side; row++) {
                 for (let column = 1; column <= side; column++) {
                     _disableClick(row, column);
@@ -461,12 +462,28 @@
             }
         }
 
+        function _manageInputField(status) {
+            let inputFields = document.querySelectorAll("#user-input input");
+            for (let index = 0; index < inputFields.length; index++) {
+                const element = inputFields[index];
+                element.disabled = status;
+            }
+
+            let modeButtons = document.querySelector("#modes").children;
+            for (let index = 0; index < modeButtons.length; index++) {
+                const element = modeButtons[index];
+                element.disabled = status;
+            }
+        }
+
+
         function publishVerdict(verdict) {
             const verdictPara = document.querySelector("#verdict");
             verdictPara.textContent = verdict;
         }
 
-        function reset(Event) {
+        function _reset(Event) {
+            _manageInputField(true);
             if (Event.target.textContent === "Start") {
                 Event.target.textContent = "Reset";
                 createGrid();
@@ -479,7 +496,7 @@
         }
 
         const resetButton = document.querySelector(".reset");
-        resetButton.addEventListener("click", reset);
+        resetButton.addEventListener("click", _reset);
         const modesButtons = document.querySelector("#modes").children;
         for (let child = 0; child < modesButtons.length; child++) {
             const modeButton = modesButtons[child];
