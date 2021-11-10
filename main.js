@@ -186,6 +186,8 @@
     let computer = (function () {
         let bestScore = new Array(base3.shift(side * side));
         bestScore.fill(1e9);
+        let numOfMoves = new Array(base3.shift(side * side));
+        numOfMoves.fill(1e9);
         let bestMove = new Array(base3.shift(side * side));
 
         function recur(num) {
@@ -195,6 +197,7 @@
 
             let currentVerdict = checker.checkBoard(makeBoard(num));
             if (currentVerdict.verdict === "finished") {
+                numOfMoves[num] = 0;
                 if (currentVerdict.winner === "1") {
                     bestScore[num] = -1;
                     return bestScore[num];
@@ -203,19 +206,27 @@
                     return bestScore[num];
                 }
             } else if (currentVerdict.verdict === "tie") {
+                numOfMoves[num] = 0;
                 bestScore[num] = 0;
                 return bestScore[num];
             } else {
                 bestScore[num] = -2;
                 for (let i = 0; i < side * side; i++) {
                     if (base3.getBit(num, i) === 2) {
-                        let nxt = base3.setBit(num, i, 0);
-                        let result = -1 * recur(base3.transform(nxt, side * side));
-                        if (result > bestScore[num]) {
+                        let nxt = base3.transform(base3.setBit(num, i, 0), side * side);
+                        let result = -1 * recur(nxt);
+                        let updateAns = () => {
+                            numOfMoves[num] = numOfMoves[nxt] + 1;
                             bestScore[num] = result;
                             let row = Math.floor(i / side);
                             let column = i % side;
                             bestMove[num] = { row, column };
+                        }
+                        if (result > bestScore[num]) {
+                            updateAns();
+                        }
+                        else if (result === bestScore[num] && numOfMoves[nxt] + 1 < numOfMoves[num]) {
+                            updateAns();
                         }
                     }
                 }
